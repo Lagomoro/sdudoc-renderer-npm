@@ -24,32 +24,24 @@ function LayerFactory(){
     throw new Error('This is a static class');
 }
 // --------------------------------------------------------------------------------
-// * Constant
-// --------------------------------------------------------------------------------
-LayerFactory.SAPARATOR = '_';
-// --------------------------------------------------------------------------------
 // * Property
 // --------------------------------------------------------------------------------
-LayerFactory._interpreter = {};
+LayerFactory._layers = {};
 // --------------------------------------------------------------------------------
 // * Function
 // --------------------------------------------------------------------------------
-LayerFactory.addInterpreter = function(element){
-    this._interpreter[element.TAG] = element;
+LayerFactory.addLayer = function(layer){
+    this._layers[layer.TAG] = layer;
 };
 // --------------------------------------------------------------------------------
 // * New Element
 // --------------------------------------------------------------------------------
-LayerFactory.newElement = function(username, tag){
-    return this._interpreter[tag].newElement(arguments);
-};
-// --------------------------------------------------------------------------------
-// * Load Element
-// --------------------------------------------------------------------------------
-LayerFactory.loadElement = function(json_object){
-    let element = this._interpreter[json_object.tag].newElement();
-    element.loadJson(json_object);
-    return element;
+LayerFactory.createLayers = function(){
+    let layers = [];
+    for(let key in this._layers){
+        layers.push(new this._layers[key]);
+    }
+    return layers;
 };
 // ================================================================================
 

@@ -103,7 +103,7 @@ Layer.prototype.clear = function(){
     this._texture = null;
 };
 // --------------------------------------------------------------------------------
-// * Functions
+// * Function
 // --------------------------------------------------------------------------------
 Layer.prototype.update = function(width, height){
 
