@@ -136,9 +136,9 @@ GraphicsUtil.calcTextRenderBuffer = function(ctx, text, size, color, align){
         align: align
     }
 
-    let text_style = new this._PIXI.TextStyle(style);
-    let text_metrics = this._PIXI.TextMetrics.measureText(text, text_style);
-    let pixi_text = new this._PIXI.Text(text, text_style);
+    let text_style = new PIXI.TextStyle(style);
+    let text_metrics = PIXI.TextMetrics.measureText(text, text_style);
+    let pixi_text = new PIXI.Text(text, text_style);
     pixi_text.updateText();
 
     return {
@@ -189,7 +189,7 @@ GraphicsUtil._calcTextMatrix = function(ctx, text_metrics, x, y, width, align_x,
 GraphicsUtil._fillTextText = function(ctx, texture, x, y, width, height){
     ctx.beginTextureFill({
         texture: texture,
-        matrix: new this._PIXI.Matrix(1, 0, 0, 1, x, y)
+        matrix: new PIXI.Matrix(1, 0, 0, 1, x, y)
     });
     ctx.drawRect(x, y, width, height);
     ctx.endFill();
@@ -325,16 +325,16 @@ GraphicsUtil.fillTextCanvas = function(ctx, text, x, y, width, size, text_color,
 // --------------------------------------------------------------------------------
 // ! Cause Memory Leak
 GraphicsUtil.drawImage = function(ctx, image, x, y, width, height){
-    this.drawTexture(this._PIXI.Texture.from(image), x, y, width, height, width / this._image.width);
+    this.drawTexture(PIXI.Texture.from(image), x, y, width, height, width / this._image.width);
 };
 // ! Cause Memory Leak
 GraphicsUtil.drawCanvas = function(ctx, canvas, x, y, width, height){
-    this.drawTexture(this._PIXI.Texture.from(canvas), x, y, width, height, 1);
+    this.drawTexture(PIXI.Texture.from(canvas), x, y, width, height, 1);
 };
 GraphicsUtil.drawTexture = function(ctx, texture, x, y, width, height, scale){
     ctx.beginTextureFill({
         texture: texture,
-        matrix: new this._PIXI.Matrix(scale, 0, 0, scale, x, y)
+        matrix: new PIXI.Matrix(scale, 0, 0, scale, x, y)
     });
     ctx.drawRect(x, y, width, height);
     ctx.endFill();

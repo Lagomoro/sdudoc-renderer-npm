@@ -15,11 +15,11 @@
  * @private
  */
 // --------------------------------------------------------------------------------
-const Point2D     = require("../core/Point2D");
-const Line2D      = require('../core/Line2D');
-const Polygon2D   = require('../core/Polygon2D');
-const Rectangle2D = require("../core/Rectangle2D");
-const PIXI        = require("pixi.js");
+const Point2D      = require("../core/Point2D");
+const Line2D       = require('../core/Line2D');
+const Polygon2D    = require('../core/Polygon2D');
+const Rectangle2D  = require("../core/Rectangle2D");
+const GraphicsUtil = require("../graphics/GraphicsUtil");
 // ================================================================================
 
 // ================================================================================
@@ -31,8 +31,7 @@ function Layer(){
 // --------------------------------------------------------------------------------
 // * Constant
 // --------------------------------------------------------------------------------
-Layer.MIN_SCALE = 0.025;
-Layer.MAX_SCALE = 5;
+Layer.TAG = "Layer";
 // --------------------------------------------------------------------------------
 // * Property
 // --------------------------------------------------------------------------------
@@ -98,14 +97,18 @@ Layer.prototype.clear = function(){
     this._context.dispose();
     this._canvas.dispose();
 
-    this._canvas = null;
-    this._context = null;
-    this._texture = null;
+    this._canvas = document.createElement('canvas');
+    this._context = this._canvas.getContext('2d');
+    this._texture = PIXI.Texture.from(this._canvas);
 };
 // --------------------------------------------------------------------------------
 // * Function
 // --------------------------------------------------------------------------------
-Layer.prototype.update = function(width, height){
+Layer.prototype.render = function(ctx){
+    GraphicsUtil.drawTexture(ctx, this._texture, 0, 0, 0, 0, this._scale);
+};
+// --------------------------------------------------------------------------------
+Layer.prototype.update = function(origin, viewport, scale, document){
 
 };
 // --------------------------------------------------------------------------------

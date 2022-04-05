@@ -1,6 +1,6 @@
 {
   "name": "sdudoc-renderer",
-  "version": "0.0.1",
+  "version": "0.0.1-beta",
   "description": "SDUDOC renderer for WebGL / Canvas",
   "main": "index.js",
   "scripts": {
