@@ -93,20 +93,16 @@ Layer.prototype.clear = function(){
     this._y = 0;
     this._origin.moveTo(0, 0);
 
-    this._texture.dispose();
-    this._context.dispose();
-    this._canvas.dispose();
-
-    this._canvas = document.createElement('canvas');
-    this._context = this._canvas.getContext('2d');
-    this._texture = PIXI.Texture.from(this._canvas);
+    this._context.clear();
 };
 // --------------------------------------------------------------------------------
-// * Function
+// * Render Frame
 // --------------------------------------------------------------------------------
 Layer.prototype.render = function(ctx){
     GraphicsUtil.drawTexture(ctx, this._texture, 0, 0, 0, 0, this._scale);
 };
+// --------------------------------------------------------------------------------
+// * Refresh Frame
 // --------------------------------------------------------------------------------
 Layer.prototype.update = function(origin, viewport, scale, document){
 

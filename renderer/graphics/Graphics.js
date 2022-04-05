@@ -20,7 +20,8 @@ const Line2D      = require('../core/Line2D');
 const Polygon2D   = require('../core/Polygon2D');
 const Rectangle2D = require("../core/Rectangle2D");
 const Grid2D      = require("./Grid2D");
-const PIXI        = require("pixi.js");
+const LayerPool = require("../layer/LayerPool");
+const GraphicsUtil = require("./GraphicsUtil");
 // ================================================================================
 
 // ================================================================================
@@ -45,7 +46,7 @@ Graphics.DRAW_SCALE_PLATE = true;
 // * Property
 // --------------------------------------------------------------------------------
 Graphics.prototype._grid = null;
-Graphics.prototype._layers = [];
+Graphics.prototype._layer_pool = null;
 // --------------------------------------------------------------------------------
 Graphics.prototype._canvas = null;
 Graphics.prototype._context = null;
@@ -63,7 +64,7 @@ Object.defineProperty(Graphics.prototype, 'header', {
 // --------------------------------------------------------------------------------
 Graphics.prototype.initialize = function(canvas){
     this._grid = new Grid2D();
-    this._layers = [];
+    this._layer_pool = new LayerPool();
 
     this._canvas = canvas;
     this._context = this._canvas.getContext('2d');
@@ -71,14 +72,22 @@ Graphics.prototype.initialize = function(canvas){
 };
 Graphics.prototype.clear = function(){
     this._grid.clear();
-    for(let i = 0; i < this._layers.length; i++){
-        this._layers[i].clear();
-    }
-    this._layers = [];
+    this._layer_pool.clear();
 
-    this._canvas = null;
-    this._context = null;
-    this._texture = null;
+    this._context.clear();
+};
+// --------------------------------------------------------------------------------
+// * Render Frame
+// --------------------------------------------------------------------------------
+Graphics.prototype.render = function(){
+    if (!this._canvas) return;
+
+    this._context.clear();
+
+    this._layer_pool.renderBottomLayers(this._context);
+    if (Graphics.DRAW_GRID) this.drawGrid();
+    this._layer_pool.renderTopLayers(this._context);
+    if (Graphics.DRAW_SCALE_PLATE) this.drawScalePlate();
 };
 // --------------------------------------------------------------------------------
 // * Refresh Frame
@@ -91,39 +100,27 @@ Graphics.prototype.update = function(){
 Graphics.prototype.refresh = function(){
     if (!this._canvas) return;
 
-    for(let i = 0; i < this._layers.length; i++){
-        this._layers[i].refresh();
-    }
-
-    this._context.clear();
-    this.drawBottomLayers();
-    if (Graphics.DRAW_GRID) this.drawGrid();
-    this.drawTopLayers();
-    if (Graphics.DRAW_SCALE_PLATE) this.drawScalePlate();
 };
 // --------------------------------------------------------------------------------
 // * Draw Parts
 // --------------------------------------------------------------------------------
-Graphics.prototype.drawBottomLayers = function(){
-
-}
 Graphics.prototype.drawGrid = function(){
-    let scaled_unit = this.GRID_UNIT_LENGTH * this._scale;
+    let scaled_unit = Graphics.GRID_UNIT_LENGTH * this._grid.scale;
     let draw_unit = 0;
     let unit_scale = 1;
-    if(scaled_unit < this.GRID_UNIT_LIMIT) {
-        for(let i = scaled_unit; i < this.GRID_UNIT_LIMIT; i *= 2){
+    if(scaled_unit < Graphics.GRID_UNIT_LIMIT) {
+        for(let i = scaled_unit; i < Graphics.GRID_UNIT_LIMIT; i *= 2){
             draw_unit = i;
             unit_scale *= 2;
         }
     }else{
-        for(let i = scaled_unit; i > this.GRID_UNIT_LIMIT / 2; i /= 2){
+        for(let i = scaled_unit; i > Graphics.GRID_UNIT_LIMIT / 2; i /= 2){
             draw_unit = i;
             unit_scale /= 2;
         }
     }
-    let draw_start_x = this._origin.x / draw_unit;
-    let draw_start_y = this._origin.y / draw_unit;
+    let draw_start_x = this._grid.origin.x / draw_unit;
+    let draw_start_y = this._grid.origin.y / draw_unit;
     let draw_origin_x = Math.floor(draw_start_x);
     let draw_origin_y = Math.floor(draw_start_y);
 
@@ -134,22 +131,19 @@ Graphics.prototype.drawGrid = function(){
 
     for(let i = draw_start_x - draw_origin_x; i <= cw / draw_unit; i ++){
         let alpha = ((Math.floor(i) - draw_origin_x) % 2 === 0 ? 1 : Math.min(1, draw_unit / 10 - 5));
-        this.fillRect(sx + i * draw_unit - 0.5, sy, 1, ch, 0xd3d3d3, alpha);
+        GraphicsUtil.fillRect(this._context, sx + i * draw_unit - 0.5, sy, 1, ch, 0xd3d3d3, alpha);
     }
     for(let i = draw_start_y - draw_origin_y; i <= ch / draw_unit; i ++){
         let alpha = ((Math.floor(i) - draw_origin_y) % 2 === 0 ? 1 : Math.min(1, draw_unit / 10 - 5));
-        this.fillRect(sx, sy + i * draw_unit - 0.5, cw, 1, 0xd3d3d3, alpha);
+        GraphicsUtil.fillRect(this._context, sx, sy + i * draw_unit - 0.5, cw, 1, 0xd3d3d3, alpha);
     }
 };
-Graphics.prototype.drawTopLayers = function(){
-
-}
 Graphics.prototype.drawScalePlate = function(){
-    this.fillRect(0, 0, this.SCALE_PLATE_WIDTH, this._canvas.height, 0xf5f5f5, 1);
-    this.fillRect(0, 0, this._canvas.width, this.SCALE_PLATE_WIDTH, 0xf5f5f5, 1);
-    this.fillRect(this._content_rect.x - 1, this._content_rect.y - 1, 1, this._content_rect.height,
+    GraphicsUtil.fillRect(this._context, 0, 0, Graphics.SCALE_PLATE_WIDTH, this._canvas.height, 0xf5f5f5, 1);
+    GraphicsUtil.fillRect(this._context, 0, 0, this._canvas.width, Graphics.SCALE_PLATE_WIDTH, 0xf5f5f5, 1);
+    GraphicsUtil.fillRect(this._context, this._content_rect.x - 1, this._content_rect.y - 1, 1, this._content_rect.height,
         0xd3d3d3, 1);
-    this.fillRect(this._content_rect.x - 1, this._content_rect.y - 1, this._content_rect.width, 1,
+    GraphicsUtil.fillRect(this._context, this._content_rect.x - 1, this._content_rect.y - 1, this._content_rect.width, 1,
         0xd3d3d3, 1);
 
     this._temp_context.font = '8px Arial';
@@ -190,7 +184,7 @@ Graphics.prototype.drawScalePlate = function(){
         this.fillRect(x, y, 1, height, 0xd3d3d3, alpha);
 
         this._temp_context.fillStyle = 'rgba(0, 0, 0, ' + ((Math.floor(i) - draw_origin_x) % 2 === 0 ? 1 : (draw_unit / 10 - 5)) +')';
-        let point = Math.round((Math.floor(i) - draw_origin_x) * this.GRID_UNIT_LENGTH * unit_scale);
+        let point = Math.round((Math.floor(i) - draw_origin_x) * Graphics.GRID_UNIT_LENGTH * unit_scale);
         // this.fillText(String(point / 2), x + 1, sy + this.SCALE_PLATE_WIDTH - 2, 0,
         //   8, 'grey', 'left', 'top');
         let text_width = this._temp_context.measureText(String(point / 2)).width;
@@ -200,14 +194,14 @@ Graphics.prototype.drawScalePlate = function(){
     }
     for(let i = draw_start_y - draw_origin_y; i <= ch / draw_unit; i ++){
         let alpha = ((Math.floor(i) - draw_origin_y) % 2 === 0 ? 1 : Math.min(1, draw_unit / 10 - 5));
-        let x = sx + this.SCALE_PLATE_WIDTH * (1 - alpha * 0.6);
+        let x = sx + Graphics.SCALE_PLATE_WIDTH * (1 - alpha * 0.6);
         let y = sy + i * draw_unit - 0.5;
         if (y < cy) continue;
-        let width = this.SCALE_PLATE_WIDTH - x;
+        let width = Graphics.SCALE_PLATE_WIDTH - x;
         this.fillRect(x, y, width, 1, 0xd3d3d3, alpha);
 
         this._temp_context.fillStyle = 'rgba(0, 0, 0, ' + ((Math.floor(i) - draw_origin_y) % 2 === 0 ? 1 : (draw_unit / 10 - 5)) +')';
-        let point = Math.round((Math.floor(i) - draw_origin_y) * this.GRID_UNIT_LENGTH * unit_scale);
+        let point = Math.round((Math.floor(i) - draw_origin_y) * Graphics.GRID_UNIT_LENGTH * unit_scale);
         // this.fillText(String(point / 2), sx + this.SCALE_PLATE_WIDTH + 1, y - 1, 0,
         //   8, 'grey', 'left', 'top');
         let text_width = this._temp_context.measureText(String(point / 2)).width;
@@ -219,100 +213,28 @@ Graphics.prototype.drawScalePlate = function(){
     this.renderTempTexture();
 };
 
+Graphics.prototype.calcContentRectangle = function(){
+    if(!this._canvas) return new Rectangle2D(0, 0, 0, 0);
+    if(this._draw_scale_plate){
+        return new Rectangle2D(this.SCALE_PLATE_WIDTH, this.SCALE_PLATE_WIDTH,
+            this._canvas.width - this.SCALE_PLATE_WIDTH, this._canvas.height - this.SCALE_PLATE_WIDTH);
+    }else{
+        return new Rectangle2D(0, 0, this._canvas.width, this._canvas.height);
+    }
+};
+// ================================================================================
+// * Module exports
+// --------------------------------------------------------------------------------
+/**
+ * Module exports.
+ * @public
+ */
+// --------------------------------------------------------------------------------
+module.exports = Graphics;
+// ================================================================================
 
 
 
-// --------------------------------------------------------------------------------
-// * Constant
-// --------------------------------------------------------------------------------
-Graphics.MIN_SCALE = 0.025;
-Graphics.MAX_SCALE = 5;
-// --------------------------------------------------------------------------------
-// * Property
-// --------------------------------------------------------------------------------
-Graphics._draw_grid = true;
-Graphics._draw_scale_plate = true;
-// --------------------------------------------------------------------------------
-Graphics._PIXI = null;
-Graphics._canvas = null;
-Graphics._context = null;
-// --------------------------------------------------------------------------------
-Graphics._content_rect = null;
-// --------------------------------------------------------------------------------
-Graphics._temp_canvas = null;
-Graphics._temp_context = null;
-Graphics._temp_texture = null;
-Graphics._text_canvas = null;
-Graphics._text_context = null;
-Graphics._text_texture = null;
-// --------------------------------------------------------------------------------
-Graphics._image = null;
-Graphics._image_rect = null;
-Graphics._image_texture = null;
-// --------------------------------------------------------------------------------
-Graphics._origin = null;
-Graphics._scale = 1;
-// --------------------------------------------------------------------------------
-// * Initialize
-// --------------------------------------------------------------------------------
-Graphics.initialize = function(){
-    this._PIXI = null;
-    this._canvas = null;
-    this._context = null;
-    this._content_rect = null;
-
-    this._temp_canvas = null;
-    this._temp_context = null;
-    this._temp_texture = null;
-    this._text_canvas = null;
-    this._text_context = null;
-    this._text_texture = null;
-};
-Graphics.reset = function(){
-    this._image = null;
-    this._image_rect = null;
-    this._image_texture = null;
-    this._origin = this.calcInitialOrigin();
-    this._scale = 1;
-};
-Graphics.initializeEditor = function(editor){
-    this._PIXI = editor.pixi;
-    this._canvas = editor.pixi_app.view;
-    this._context = editor.pixi_context;
-    this._content_rect = this.calcContentRectangle();
-    this.initializeTempCanvas();
-    this.reset();
-    this.refresh();
-};
-Graphics.initializeTempCanvas = function(){
-    this._temp_canvas = document.createElement('canvas');
-    this._temp_context = this._temp_canvas.getContext('2d');
-    this._temp_texture = this._PIXI.Texture.from(this._temp_canvas);
-    this._text_canvas = document.createElement('canvas');
-    this._text_context = this._text_canvas.getContext('2d');
-    this._text_texture = this._PIXI.Texture.from(this._text_canvas);
-};
-// --------------------------------------------------------------------------------
-// * Getter & Setter
-// --------------------------------------------------------------------------------
-Object.defineProperty(Graphics, 'origin', {
-    get: function() {
-        return this._origin;
-    },
-    configurable: true
-});
-Object.defineProperty(Graphics, 'scale', {
-    get: function() {
-        return this._scale;
-    },
-    configurable: true
-});
-Object.defineProperty(Graphics, 'image', {
-    get: function() {
-        return this._image;
-    },
-    configurable: true
-});
 // --------------------------------------------------------------------------------
 // * Image
 // --------------------------------------------------------------------------------
@@ -358,15 +280,7 @@ Graphics.calcImageRectangle = function(){
     let h = ih * this._scale;
     return new Rectangle2D(this._origin.x, this._origin.y, w, h);
 };
-Graphics.calcContentRectangle = function(){
-    if(!this._canvas) return new Rectangle2D(0, 0, 0, 0);
-    if(this._draw_scale_plate){
-        return new Rectangle2D(this.SCALE_PLATE_WIDTH, this.SCALE_PLATE_WIDTH,
-            this._canvas.width - this.SCALE_PLATE_WIDTH, this._canvas.height - this.SCALE_PLATE_WIDTH);
-    }else{
-        return new Rectangle2D(0, 0, this._canvas.width, this._canvas.height);
-    }
-};
+
 // --------------------------------------------------------------------------------
 // * Temp
 // --------------------------------------------------------------------------------

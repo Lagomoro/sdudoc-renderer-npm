@@ -203,7 +203,7 @@ GraphicsUtil._fillTextBackground = function(ctx, x, y, width, height, radius,
     ctx.lineStyle(0);
 };
 // --------------------------------------------------------------------------------
-GraphicsUtil.drawTextWithBuffer = function(ctx, buffer, x, y, width, align_x, align_y,
+GraphicsUtil.drawTextWithBuffer = function(buffer, x, y, width, align_x, align_y,
                                        background_color, background_alpha, line_width, line_color, line_alpha){
     let text_metrics = buffer.text_metrics;
     let texture = buffer.texture;
@@ -222,7 +222,7 @@ GraphicsUtil.drawTextWithBuffer = function(ctx, buffer, x, y, width, align_x, al
     // Test:
     // this.fillCircle(x, y, 2, 0xff0000, 1);
 };
-GraphicsUtil.fillTextWithBuffer = function(ctx, buffer, x, y, width, align_x, align_y){
+GraphicsUtil.fillTextWithBuffer = function(buffer, x, y, width, align_x, align_y){
     let text_metrics = buffer.text_metrics;
     let texture = buffer.texture;
 
@@ -236,12 +236,12 @@ GraphicsUtil.fillTextWithBuffer = function(ctx, buffer, x, y, width, align_x, al
     // Test:
     // this.fillCircle(x, y, 2, 0xff0000, 1);
 };
-GraphicsUtil.drawText = function(ctx, text, x, y, width, size, text_color, align_x, align_y,
+GraphicsUtil.drawText = function(text, x, y, width, size, text_color, align_x, align_y,
                              background_color, background_alpha, line_width, line_color, line_alpha){
     let buffer = this.calcTextRenderBuffer(text, size, text_color, align_x);
     this.drawTextWithBuffer(buffer, x, y, width, align_x, align_y, background_color, background_alpha, line_width, line_color, line_alpha)
 };
-GraphicsUtil.fillText = function(ctx, text, x, y, width, size, text_color, align_x, align_y){
+GraphicsUtil.fillText = function(text, x, y, width, size, text_color, align_x, align_y){
     let buffer = this.calcTextRenderBuffer(text, size, text_color, align_x);
     this.fillTextWithBuffer(buffer, x, y, width, align_x, align_y);
 };

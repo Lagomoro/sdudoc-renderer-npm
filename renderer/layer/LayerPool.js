@@ -73,6 +73,8 @@ LayerPool.prototype._setupZList = function() {
     }
 };
 // --------------------------------------------------------------------------------
+// * Render Frame
+// --------------------------------------------------------------------------------
 LayerPool.prototype.renderBottomLayers = function(ctx) {
     for(let i = 0; i < this._layers.length; i++){
         if(this._layers[i].z_index < 0){
@@ -87,6 +89,8 @@ LayerPool.prototype.renderTopLayers = function(ctx) {
         }
     }
 };
+// --------------------------------------------------------------------------------
+// * Refresh Frame
 // --------------------------------------------------------------------------------
 LayerPool.prototype.update = function(origin, viewport, scale, document){
     for(let i = 0; i < this._layers.length; i++){
